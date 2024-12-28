@@ -83,3 +83,43 @@ run below command to run app in the root dir
 ```
 uvicorn app.main:app --reload
 ```
+
+
+## Instruction
+
+In this section I will explain some thoughts and details in this project
+
+### dataset choosing
+
+I choose the "Roleplayer Guild" dataset cause quality level is **Excellent**, and the dataset description below. Also, compraring to other datasets, this dataset is intact and good.
+
+> This dataset is different compared to the others in that it includes within the same .csv files in-character (IC, i.e. actual roleplay), out-of-character (OOC) and Character Sheet messages for a total of about 3 million messages. As OOC and Sheets share the same base url/name with the IC threads, they can be reliably associated with them, if needed. Thread tags and an additional field identifying if the messages are part of IC, OOC or sheets are included. Possibly one of the best all-around RP datasets. Special usage notes: 1: @-mentions in the IC threads could be removed. 2: A markdown file with an extended explanation of thread tags is provided.
+
+### data processing
+the final data will be processed as threads that each thead represents a whole story, a intact story.
+
+- keep only IC column for in-character reason 
+- Remove duplicates
+- Handle malformed and misformatted entries
+
+### training
+
+- Take more than 300K threads of data to train, not all of the data. The whole dataset is much more bigger.
+- using accelerate to distributed training by 8*A100
+- Leveraging wandb to track the training process
+- config.yaml to make it configrurable
+
+### deployment
+
+- Using Ray to manage the cluster that make it scalable
+- Ray provide dashboard to check the cluster's situation
+- Using vLLM to inference the model
+- One base model and lora based on that base model, not need to init another base model to load lora. Saveing a lot of VRAM, this solution also can spreed to multi-lora situations as well
+
+### app
+
+- Input for both base model and lora and compare
+- Vote feature choosing the model they like
+- statistics feature evaluating preferences
+- FastAPI based
+- sqlite3 for simplicity and demonstraction can be trainsition to another database easily
