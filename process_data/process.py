@@ -80,7 +80,8 @@ for file_name in file_list:
             continue
             
         # save space (remove this limitation in production)
-        messages = messages[:3]
+        # if want to process fast, uncomment it
+        # messages = messages[:3]
         
         with open(f'{dir_path}/../threads/{safe_title}.txt', 'w', encoding='utf-8') as f:
             f.write('\n'.join(messages))

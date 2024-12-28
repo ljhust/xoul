@@ -1,4 +1,4 @@
-base_model: sophosympatheia/Midnight-Miqu-70B-v1.0
-lora_model: sophosympatheia/Midnight-Miqu-70B-v1.0-lora
+base_model: sophosympatheia/Midnight-Miqu-70B-v1.0  # base model name
+lora_model: sophosympatheia/Midnight-Miqu-70B-v1.0-lora  # lora model name
 lora_modules:
-  - "sophosympatheia/Midnight-Miqu-70B-v1.0-lora:./checkpoint_4501.pth"
+  - "sophosympatheia/Midnight-Miqu-70B-v1.0-lora:./checkpoint_4501.pth" # lora pth file path, split by :

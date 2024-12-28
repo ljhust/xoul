@@ -104,13 +104,15 @@ the final data will be processed as threads that each thead represents a whole s
 
 ### training
 
-- Take more than 300K threads of data to train, not all of the data. The whole dataset is much more bigger.
-- using accelerate to distributed training by 8*A100
+- Take more than 300K threads of data to train, not all of the data. The whole dataset is much more bigger
+- For the time reasone, training process stops at 4501. The lora model is checkpoint_4501.pth and been download
+- Using accelerate, bitsandbytes and peft to distributed training in 8*A100 enviroment
 - Leveraging wandb to track the training process
 - config.yaml to make it configrurable
 
 ### deployment
 
+- OpanAI like client 
 - Using Ray to manage the cluster that make it scalable
 - Ray provide dashboard to check the cluster's situation
 - Using vLLM to inference the model

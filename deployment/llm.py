@@ -29,6 +29,7 @@ logger = logging.getLogger("ray.serve")
 
 app = FastAPI()
 
+# chat template for transformer>=4.5 is inevitable
 DEFAULT_CHAT_TEMPLATE = """{% if messages[0]['role'] == 'system' %}{% set loop_messages = messages[1:] %}{% set system_message = messages[0]['content'] %}{% else %}{% set loop_messages = messages %}{% set system_message = false %}{% endif %}
 {% if system_message %}{{ system_message }}
 {% endif %}{% for message in loop_messages %}{% if message['role'] == 'user' %}User: {{ message['content'] }}
@@ -52,6 +53,7 @@ class LoRAModulePath:
     path: str
     adapter_name: Optional[str] = None
 
+# have to transform lora pairs into LoRAModulePath type
 def parse_lora_modules(lora_paths: str) -> Optional[List[LoRAModulePath]]:
     """Parse comma-separated LoRA paths into LoRAModulePath objects"""
     if not lora_paths:
@@ -61,22 +63,22 @@ def parse_lora_modules(lora_paths: str) -> Optional[List[LoRAModulePath]]:
     for path in lora_paths.split(','):
         path = path.strip()
         if ':' in path:
-            # 适配器名称在前，路径在后
+            # Adapter name is before the colon, path is after
             adapter_name, path = path.split(':', 1)
             lora_modules.append(LoRAModulePath(path=path, adapter_name=adapter_name))
         else:
-            # 否则只使用路径
+            # Otherwise, only use the path
             lora_modules.append(LoRAModulePath(path=path))
     
     return lora_modules
 
 @serve.deployment(
     autoscaling_config={
-        "min_replicas": 1,
-        "max_replicas": 10,
-        "target_ongoing_requests": 5,
+        "min_replicas": 1,  # Minimum number of replicas to maintain
+        "max_replicas": 10,  # Maximum number of replicas that can be created
+        "target_ongoing_requests": 5,  # Target number of ongoing requests per replica
     },
-    max_ongoing_requests=10,
+    max_ongoing_requests=10,  # Maximum number of ongoing requests allowed per replica
 )
 @serve.ingress(app)
 class VLLMDeployment:
@@ -108,7 +110,7 @@ class VLLMDeployment:
     async def create_chat_completion(
         self, request: ChatCompletionRequest, raw_request: Request
     ):
-        # 根据请求的模型名称决定使用哪个服务
+        # Decide which service to use based on the requested model name
         is_lora = request.model == self.lora_model
 
         if is_lora:
@@ -133,7 +135,7 @@ class VLLMDeployment:
                     model_config,
                     [self.base_model],
                     self.response_role,
-                    lora_modules=None,  # 基础模型不使用 LoRA
+                    lora_modules=None,  # Base model does not use LoRA
                     prompt_adapters=self.prompt_adapters,
                     request_logger=self.request_logger,
                     chat_template=self.chat_template,
@@ -160,7 +162,7 @@ def parse_vllm_args(cli_args: Dict[str, str]):
     return parsed_args
 
 
-# 修改 build_app 函数，只需要一个部署
+# Modify the build_app function to require only one deployment
 def build_app(cli_args: Dict[str, str]) -> serve.Application:
     """Builds a single Serve app that can handle both base and LoRA models."""
     if "accelerator" in cli_args.keys():
@@ -179,7 +181,7 @@ def build_app(cli_args: Dict[str, str]) -> serve.Application:
     for i in range(tp):
         pg_resources.append({"CPU": 1, accelerator: 1})  # for the vLLM actors
 
-    # 创建单个部署，同时支持基础模型和 LoRA
+    # Create a single deployment that supports both base and LoRA models
     deployment = VLLMDeployment.options(
         name="model_server",
         placement_group_bundles=pg_resources,

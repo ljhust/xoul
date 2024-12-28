@@ -18,20 +18,19 @@ import re
 import wandb
 import os
 
+# Disable parallelism in tokenizers to avoid warnings
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
-
-# 加载配置文件
+# Function to load configuration from a YAML file
 def load_config(config_path: str):
     with open(config_path, "r") as f:
         config = yaml.safe_load(f)
     return config
 
-
-# 加载配置
+# Load configuration
 config = load_config("config.yaml")
 
-# Logging 配置
+# Set up logging
 logger = get_logger(__name__, log_level='INFO')
 stream_handler = logging.StreamHandler()
 stream_handler.setLevel(logging.DEBUG)
@@ -39,17 +38,17 @@ formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 stream_handler.setFormatter(formatter)
 logger.logger.addHandler(stream_handler)
 
-# 初始化 wandb
+# Initialize Weights & Biases for experiment tracking
 wandb.init(
     project=config["wandb"]["project"],
-    config=config["training"]  # 将 `training` 配置同步到 wandb
+    config=config["training"]  # Sync training config with wandb
 )
 
-# 加载模型和 Tokenizer
+# Load model and tokenizer
 training_config = config["training"]
 tokenizer = AutoTokenizer.from_pretrained(training_config["model_name"])
 
-# 数据集处理
+# Load and preprocess dataset
 try:
     data = load_dataset(
         "text",
@@ -58,16 +57,18 @@ try:
 except Exception as e:
     logger.error(f"Failed to load dataset: {e}")
     raise
+
+# Tokenize dataset
 data = data.map(
     lambda samples: tokenizer(
         samples["text"], 
-        max_length=training_config["max_length"],  # 使用配置中的 max_length
+        max_length=training_config["max_length"],  # Use max_length from config
         truncation=True
     ), 
     batched=True
 )
 
-
+# Function to collate data into batches
 def collate_fn(batch):
     inputs = [torch.tensor(b['input_ids']) for b in batch]
     input_ids = pad_sequence(inputs, batch_first=True, 
@@ -76,20 +77,17 @@ def collate_fn(batch):
     labels = pad_sequence(inputs, batch_first=True, padding_value=-100)
     return {'input_ids': input_ids, 'labels': labels}
 
-
-
-# 删除历史模型
+# Function to delete past model checkpoints
 def del_past_models(save_path, file_exten='pth'):
     past_models = glob.glob(os.path.join(save_path, '*.' + file_exten))
     for past_model in past_models:
         os.remove(past_model)
         logger.info(f'Remove model {past_model}!')
 
-
-# 保存检查点
+# Function to save model checkpoints
 def save_checkpoint(path, model, optim, sched, epoch, iters):
     try:
-        os.makedirs(path, exist_ok=True)  # 确保目录存在
+        os.makedirs(path, exist_ok=True)  # Ensure directory exists
         checkpoint_path = os.path.join(path, f'checkpoint_{iters + 1}.pth')
         lr = optim.param_groups[0]['lr']
         model_state = OrderedDict((name, param) for name, param in model.named_parameters() if param.requires_grad)
@@ -104,8 +102,7 @@ def save_checkpoint(path, model, optim, sched, epoch, iters):
         logger.error(f"Failed to save checkpoint: {e}")
         raise
 
-
-# 加载检查点
+# Function to load model checkpoints
 def load_checkpoint(checkpoint_path, model, optim=None, sched=None):
     checkpoint = torch.load(checkpoint_path)
     logger.info(f"Model of epoch {checkpoint['epoch']} is loaded")
@@ -117,8 +114,7 @@ def load_checkpoint(checkpoint_path, model, optim=None, sched=None):
     else:
         return model, checkpoint['epoch']
 
-
-# 训练函数
+# Function to train the model for one epoch
 def train_epoch(epoch, model, accelerator, train_dataloader, checkpointing_steps, 
                 optimizer, lr_scheduler, save_path):
     global overall_step
@@ -148,7 +144,7 @@ def train_epoch(epoch, model, accelerator, train_dataloader, checkpointing_steps
             avg_loss = accelerator.gather(loss.repeat(len(batch))).mean()
         epoch_loss.append(avg_loss.item() / accelerator.gradient_accumulation_steps)
 
-        # 记录到 wandb
+        # Log metrics to wandb
         wandb.log({
             "epoch": epoch,
             "step": overall_step,
@@ -167,13 +163,12 @@ def train_epoch(epoch, model, accelerator, train_dataloader, checkpointing_steps
 
     logger.info(f'Epoch {epoch}: loss = {sum(epoch_loss) / len(epoch_loss): .3f}, lr = {lr: .3e}')
 
-
-# 主函数
+# Main function to set up and run training
 def main(config):
     training_config = config["training"]
     lora_config = config["lora"]
 
-    set_seed(1234)
+    set_seed(1234)  # Set random seed for reproducibility
     if not os.path.exists(training_config["save_path"]):
         os.makedirs(training_config["save_path"])
     
@@ -215,7 +210,7 @@ def main(config):
     global overall_step
     overall_step = 0
 
-    # 加载检查点
+    # Load checkpoint if exists
     if os.path.isfile(training_config["ckpt_path"]):
         model, optimizer, lr_scheduler, current_epochs = \
             load_checkpoint(training_config["ckpt_path"], model, optimizer, lr_scheduler)
@@ -243,6 +238,5 @@ def main(config):
         save_checkpoint(training_config["save_path"], unwrapped_model, optimizer, lr_scheduler, 
                        epoch, overall_step)
 
-
-# 运行主函数
+# Run the main function
 main(config)

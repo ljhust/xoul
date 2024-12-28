@@ -1,26 +1,26 @@
-project_name: xoul
+project_name: xoul  # Name of the project
 
 wandb:
-  project: xoul
+  project: xoul  # Weights & Biases project name for experiment tracking
 
 training:
-  model_name: sophosympatheia/Midnight-Miqu-70B-v1.0
-  batch_size: 2
-  num_epochs: 5
-  learning_rate: 5e-5
-  grad_accumulation_steps: 2
-  checkpointing_steps: 500
-  save_path: ./models
-  ckpt_path: ""
-  max_length: 400  # Tokenizer 的最大长度
-  num_warmup_steps: 0
-  train_data_path: /ephemeral/homework/data/threads/*.txt  # 训练数据路径
+  model_name: sophosympatheia/Midnight-Miqu-70B-v1.0  # Name of the model to be trained
+  batch_size: 1  # Number of samples per batch
+  num_epochs: 3  # Number of times to iterate over the training dataset
+  learning_rate: 5e-5  # Learning rate for the optimizer
+  grad_accumulation_steps: 2  # Number of steps to accumulate gradients before updating model weights
+  checkpointing_steps: 500  # Frequency of saving model checkpoints
+  save_path: ./models  # Directory to save the trained models
+  ckpt_path: ""  # Path to a specific checkpoint to resume training from, if any
+  max_length: 400  # Maximum length of the tokenized input
+  num_warmup_steps: 0  # Number of warmup steps for learning rate scheduler
+  train_data_path: /ephemeral/homework/data/threads/*.txt  # Path to the training data files
 
 lora:
-  r: 4
-  lora_alpha: 32
-  lora_dropout: 0.1
-  target_modules:
+  r: 4  # Rank of the low-rank adaptation
+  lora_alpha: 32  # Scaling factor for the low-rank adaptation
+  lora_dropout: 0.1  # Dropout rate for the low-rank adaptation
+  target_modules:  # List of modules to apply the low-rank adaptation
     - q_proj
     - o_proj
     - k_proj
