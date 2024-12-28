@@ -47,7 +47,6 @@ def load_yaml_config(yaml_path: str) -> Dict:
 
 model_config = load_yaml_config("model.yaml")
 
-
 @dataclass
 class LoRAModulePath:
     path: str
