@@ -1,0 +1,1 @@
+serve run llm:build_app tensor-parallel-size=2 accelerator="GPU" 

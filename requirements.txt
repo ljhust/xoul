@@ -1,0 +1,8 @@
+ray[serve]
+requests
+vllm==0.6
+transformers
+accelerate
+bitsandbytes
+peft
+datasets 

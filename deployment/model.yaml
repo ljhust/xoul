@@ -1,0 +1,4 @@
+base_model: sophosympatheia/Midnight-Miqu-70B-v1.0
+lora_model: sophosympatheia/Midnight-Miqu-70B-v1.0-lora
+lora_modules:
+  - "sophosympatheia/Midnight-Miqu-70B-v1.0-lora:./checkpoint_4501.pth"
