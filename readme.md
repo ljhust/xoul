@@ -4,7 +4,7 @@
 - **deployment**: deploy base model "sophosympatheia/Midnight-Miqu-70B-v1.0" and finetuned model
 - **train**: how to fine "sophosympatheia/Midnight-Miqu-70B-v1.0" model
 - **process_data**: The first step, you have to process the data first
-## procedure
+## Procedure
 ### install requirments
 ```
 pip install requirments.txt
@@ -41,7 +41,7 @@ change the process_data's data.yaml file, modify the dir_path to your raw_data p
 cd process_data
 python process.py
 ```
-### train
+### Train
 - Enviroment
 
 8*A100
@@ -59,7 +59,8 @@ using accelerate to run the "miqu_lora_finetune.py" and you can modify config.ya
 ```
 accelerate launch miqu_lora_finetune.py
 ```
-### deloy model and lora
+### Deloy model and lora
+
 After training, download the lora model to a specific path and record it.
 - enviroment
 
@@ -76,7 +77,7 @@ and run below command to deploy
 serve run llm:build_app tensor-parallel-size=2 accelerator="GPU" 
 ```
 
-### app
+### App
 
 run below command to run app in the root dir
 
@@ -89,20 +90,21 @@ uvicorn app.main:app --reload
 
 In this section I will explain some thoughts and details in this project
 
-### dataset choosing
+### Dataset choosing
 
 I choose the "Roleplayer Guild" dataset cause quality level is **Excellent**, and the dataset description below. Also, compraring to other datasets, this dataset is intact and good.
 
 > This dataset is different compared to the others in that it includes within the same .csv files in-character (IC, i.e. actual roleplay), out-of-character (OOC) and Character Sheet messages for a total of about 3 million messages. As OOC and Sheets share the same base url/name with the IC threads, they can be reliably associated with them, if needed. Thread tags and an additional field identifying if the messages are part of IC, OOC or sheets are included. Possibly one of the best all-around RP datasets. Special usage notes: 1: @-mentions in the IC threads could be removed. 2: A markdown file with an extended explanation of thread tags is provided.
 
-### data processing
+### Data processing
+
 the final data will be processed as threads that each thead represents a whole story, a intact story.
 
 - keep only IC column for in-character reason 
 - Remove duplicates
 - Handle malformed and misformatted entries
 
-### training
+### Training
 
 - Take more than 300K threads of data to train, not all of the data. The whole dataset is much more bigger
 - For the time reasone, training process stops at 4501. The lora model is checkpoint_4501.pth and been download
@@ -110,7 +112,7 @@ the final data will be processed as threads that each thead represents a whole s
 - Leveraging wandb to track the training process
 - config.yaml to make it configrurable
 
-### deployment
+### Deployment
 
 - OpanAI like client 
 - Using Ray to manage the cluster that make it scalable
@@ -118,7 +120,7 @@ the final data will be processed as threads that each thead represents a whole s
 - Using vLLM to inference the model
 - One base model and lora based on that base model, not need to init another base model to load lora. Saveing a lot of VRAM, this solution also can spreed to multi-lora situations as well
 
-### app
+### App
 
 - Input for both base model and lora and compare
 - Vote feature choosing the model they like
